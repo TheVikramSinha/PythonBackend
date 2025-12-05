@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timed Python Backend Developer Assessment</title>
+    <style>
+        /* CSS for Typeform-like UI */
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f4f7f6;
+            color: #333;
+            transition: background-color 0.5s;
+        }
+        #quiz-container {
+            background: white;
+            padding: 40px 60px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 700px;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .question-slide {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+        .question-slide.active {
+            display: block;
+            opacity: 1;
+        }
+        h2 {
+            font-size: 1.8em;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .scenario-text {
+            font-size: 1.1em;
+            margin-bottom: 25px;
+            line-height: 1.5;
+            padding: 15px;
+            background-color: #eef3f5;
+            border-left: 5px solid #ffc107; /* Yellow/Gold for Python */
+            border-radius: 4px;
+        }
+        .option-button {
+            display: block;
+            width: 100%;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            background: white;
+            font-size: 1.05em;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+            line-height: 1.4;
+        }
+        .option-button:hover {
+            border-color: #ffc107;
+            background-color: #fffaf0;
+        }
+        .option-button.selected {
+            background-color: #ffc107;
+            color: #333;
+            border-color: #ffc107;
+            font-weight: bold;
+        }
+        #navigation {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-top: 30px;
+        }
+        .nav-button {
+            padding: 10px 20px;
+            font-size: 1em;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        #next-button {
+            background-color: #007bff;
+            color: white;
+        }
+        #next-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #result-screen {
+            text-align: center;
+            padding: 50px 0;
+        }
+        #result-screen h2 {
+            font-size: 2.5em;
+            color: #ffc107;
+        }
+        .progress-bar {
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #ffc107;
+            width: 0%;
+            transition: width 0.3s ease-in-out;
+        }
+        #timer-display {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #dc3545; /* Red color for urgency */
+            text-align: right;
+            margin-bottom: 20px;
+        }
+        /* Style for the start screen */
+        #start-screen {
+            text-align: center;
+            padding: 50px 20px;
+        }
+        #start-screen h1 {
+            color: #ffc107;
+            font-size: 2.5em;
+        }
+        #start-button {
+            background-color: #ffc107;
+            color: #333;
+            padding: 15px 40px;
+            font-size: 1.4em;
+            border-radius: 8px;
+            margin-top: 30px;
+            cursor: pointer;
+            border: none;
+            transition: background-color 0.2s;
+            font-weight: bold;
+        }
+        #start-button:hover {
+            background-color: #e0a800;
+        }
+        .instruction-item {
+            text-align: left;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+        .important-note {
+            color: #dc3545;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div id="quiz-container">
+    
+    <div id="start-screen">
+        <h1>🐍 Python Backend Assessment</h1>
+        <p style="margin-top: 20px; font-size: 1.2em;">Welcome to the timed technical assessment. Please read the instructions carefully before starting.</p>
+        
+        <hr style="margin: 25px 0;">
+
+        <div class="instruction-item">
+            ✅ **Total Questions:** 20 Scenario-based questions covering Django, Flask, concurrency, and API design.
+        </div>
+        <div class="instruction-item">
+            ⏱️ **Time Limit:** You have **30 seconds** per question.
+        </div>
+        <div class="instruction-item important-note">
+            ⚠️ **Critical:** The timer will start immediately upon clicking 'Start Test' and questions will auto-advance when time runs out. **There is no going back.**
+        </div>
+
+        <button id="start-button" onclick="startQuiz()">Start Test</button>
+    </div>
+    
+    <div id="quiz-interface" style="display: none;">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <div id="timer-display">Time Left: <span id="time-left">30</span>s</div>
+        
+        <div id="quiz-content">
+            </div>
+        
+        <div id="result-screen" style="display: none;">
+            <h2>Assessment Complete! 🎉</h2>
+            <p style="font-size: 1.2em;">You have successfully completed the Python Backend Assessment.</p>
+            <p style="font-size: 1.5em; margin-top: 20px;">Your Score:</p>
+            <p id="final-score" style="font-size: 3em; font-weight: bold; color: #ffc107;">--/--</p>
+            <p id="performance-feedback" style="font-size: 1.1em; color: #555;"></p>
+            <button class="nav-button" onclick="window.location.reload()">Retake Assessment</button>
+        </div>
+
+        <div id="navigation">
+            <button id="next-button" class="nav-button" disabled>Next →</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[i], array[j]];
+        }
+        return array;
+    }
+
+    const initialQuestions = [
+        {
+            scenario: "You are building a high-performance, I/O-bound web scraper in Python that needs to handle hundreds of concurrent requests.",
+            question: "Which built-in Python module is the most efficient choice for managing this high concurrency without blocking the main thread?",
+            options: [
+                "**asyncio** (Asynchronous I/O)",
+                "The `threading` module",
+                "The `multiprocessing` module",
+                "The `subprocess` module"
+            ],
+            answerText: "**asyncio** (Asynchronous I/O)"
+        },
+        {
+            scenario: "You are designing a REST API endpoint in Django that allows users to update their profile data. Sensitive fields like email should not be editable after creation.",
+            question: "In **Django REST Framework (DRF)**, which type of serializer field should you use for the email field during an update operation?",
+            options: [
+                "`ReadOnlyField`",
+                "`HiddenField`",
+                "**`extra_kwargs = {'email': {'read_only': True}}`**",
+                "`SlugRelatedField`"
+            ],
+            answerText: "**`extra_kwargs = {'email': {'read_only': True}}`**"
+        },
+        {
+            scenario: "You need to ensure that a critical operation in your Python API, such as a large database transaction, is not interrupted or executed partially.",
+            question: "Which Python concept or technique is essential to guarantee data integrity in this scenario?",
+            options: [
+                "Use the `try...except` block.",
+                "Implement a **Database Transaction** (ACID properties).",
+                "Use `logging` to track the operation.",
+                "Apply the Singleton design pattern."
+            ],
+            answerText: "Implement a **Database Transaction** (ACID properties)."
+        },
+        {
+            scenario: "Your Python application uses a library that is not thread-safe. You need to use it in a multi-threaded context without introducing race conditions.",
+            question: "Which mechanism from Python's threading module should you use to protect the shared resource access?",
+            options: [
+                "A **`Lock`** (or mutex)",
+                "A `Queue`",
+                "The `Event` object",
+                "The `Semaphore`"
+            ],
+            answerText: "A **`Lock`** (or mutex)"
+        },
+        {
+            scenario: "A Django view needs to fetch data from two separate, time-consuming external services before returning a response.",
+            question: "What is the most modern and recommended way in Django to efficiently call these two services concurrently?",
+            options: [
+                "Use **Asynchronous Views** (`async def`) and `asyncio.gather()` for parallel I/O.",
+                "Start a new Python `Thread` for each external service.",
+                "Use a synchronous `requests.get()` call one after the other.",
+                "Configure a Celery task for the view logic."
+            ],
+            answerText: "Use **Asynchronous Views** (`async def`) and `asyncio.gather()` for parallel I/O."
+        },
+        {
+            scenario: "You discover that a database query in your Django ORM takes 500ms, causing performance bottlenecks on the API endpoint.",
+            question: "What is the most immediate and effective Django ORM technique to potentially reduce the number of queries and speed this up?",
+            options: [
+                "Using **`select_related` or `prefetch_related`** to reduce N+1 queries.",
+                "Increasing the server's RAM.",
+                "Switching to the `multiprocessing` module.",
+                "Disabling the Django caching layer."
+            ],
+            answerText: "Using **`select_related` or `prefetch_related`** to reduce N+1 queries."
+        },
+        {
+            scenario: "You are deploying a Flask application to a production environment (e.g., behind Nginx). The built-in Flask server is not suitable for this high-traffic environment.",
+            question: "Which standard Python **WSGI/ASGI** server should you use to run the Flask application in production?",
+            options: [
+                "**Gunicorn** (WSGI) or **Uvicorn** (ASGI for modern async apps).",
+                "Apache HTTP Server",
+                "The native Flask Development Server",
+                "Python's `SimpleHTTPServer`"
+            ],
+            answerText: "**Gunicorn** (WSGI) or **Uvicorn** (ASGI for modern async apps)."
+        },
+        {
+            scenario: "You need to secure your API endpoints by ensuring the user accessing them has the required permissions (e.g., only 'Admin' can delete data).",
+            question: "In Python web frameworks (like Django or Flask), what is the term for the mechanism that checks if a *user* is allowed to perform a *specific action*?",
+            options: [
+                "Authentication",
+                "**Authorization** (Permissions)",
+                "Hashing",
+                "Throttling"
+            ],
+            answerText: "**Authorization** (Permissions)"
+        },
+        {
+            scenario: "You encounter a performance issue caused by the **Global Interpreter Lock (GIL)** when performing a CPU-intensive calculation (e.g., complex image processing).",
+            question: "What is the standard solution in Python to bypass the GIL restriction and utilize multiple CPU cores for parallel execution?",
+            options: [
+                "Using the **`multiprocessing`** module.",
+                "Using the `asyncio` module.",
+                "Using the `threading` module.",
+                "Using generators."
+            ],
+            answerText: "Using the **`multiprocessing`** module."
+        },
+        {
+            scenario: "You are integrating a Python microservice with another service using **RabbitMQ** for reliable, asynchronous communication.",
+            question: "What is the name of the popular Python library used to define and manage background tasks and queues, often used with Django/Flask?",
+            options: [
+                "**Celery**",
+                "Requests",
+                "Panda",
+                "Scrapy"
+            ],
+            answerText: "**Celery**"
+        },
+        {
+            scenario: "You need to store non-relational, temporary session data for quick retrieval by your API, favoring speed and low latency.",
+            question: "Which common NoSQL database/tool is typically chosen for this type of fast **in-memory caching**?",
+            options: [
+                "**Redis** (or Memcached)",
+                "MongoDB",
+                "Elasticsearch",
+                "Cassandra"
+            ],
+            answerText: "**Redis** (or Memcached)"
+        },
+        {
+            scenario: "You are designing an API endpoint that handles file uploads. The user should receive a **202 Accepted** response immediately, while the heavy file processing runs in the background.",
+            question: "Which principle of API design are you adhering to when implementing this behavior?",
+            options: [
+                "Idempotency",
+                "**Asynchronous Processing**",
+                "Statelessness",
+                "HATEOAS"
+            ],
+            answerText: "**Asynchronous Processing**"
+        },
+        {
+            scenario: "You need to deploy a Python application and all its dependencies reliably and repeatably across different environments (Dev, QA, Prod).",
+            question: "Which tool or technology is the industry standard for packaging the application and its environment into a portable unit?",
+            options: [
+                "**Docker**",
+                "Virtualenv",
+                "Pip freeze",
+                "Babel"
+            ],
+            answerText: "**Docker**"
+        },
+        {
+            scenario: "You are setting up automated tests for your Django API views. You need to simulate a POST request to an endpoint and check the resulting status code.",
+            question: "Which built-in Django module or class is the standard way to perform this type of programmatic request simulation in tests?",
+            options: [
+                "The `requests` library",
+                "**`django.test.Client`**",
+                "The `unittest` module directly",
+                "The `pylint` tool"
+            ],
+            answerText: "**`django.test.Client`**"
+        },
+        {
+            scenario: "You want to dynamically create and return structured XML or JSON data from your Python service based on a complex object structure.",
+            question: "What is the general term for the class or function responsible for converting complex Python objects into native datatypes (and vice versa) for transmission over a network?",
+            options: [
+                "Router",
+                "Viewset",
+                "**Serializer**",
+                "Middleware"
+            ],
+            answerText: "**Serializer**"
+        },
+        {
+            scenario: "You are debugging a performance issue and need to find out exactly where time is being spent in your Python code (function-by-function breakdown).",
+            question: "Which module from the Python Standard Library is designed for performing this type of detailed timing and execution analysis?",
+            options: [
+                "**`cProfile`** (or `profile`)",
+                "`logging`",
+                "`pdb` (Debugger)",
+                "`unittest`"
+            ],
+            answerText: "**`cProfile`** (or `profile`)"
+        },
+        {
+            scenario: "You need to ensure that your API endpoint, which accepts a user-provided integer, validates that the number is positive and within a specific range (1 to 100).",
+            question: "Which technique should be used in the view or serializer before processing the data to prevent invalid data from hitting the core logic?",
+            options: [
+                "Authentication",
+                "**Input Validation**",
+                "Caching",
+                "Dependency Injection"
+            ],
+            answerText: "**Input Validation**"
+        },
+        {
+            scenario: "You need to store highly sensitive data (like API keys or tokens) that should not be committed to the Git repository.",
+            question: "What is the standard practice in Python/Django development to load these values securely into the application environment?",
+            options: [
+                "Store them in a global Python file.",
+                "Use environment variables (e.g., from a **`.env`** file or OS config).",
+                "Hardcode them and use a `.gitignore` rule.",
+                "Encrypt them directly within the source code."
+            ],
+            answerText: "Use environment variables (e.g., from a **`.env`** file or OS config)."
+        },
+        {
+            scenario: "You are using Django's ORM and want to fetch all users but only retrieve the `first_name` and `last_name` columns from the database.",
+            question: "Which Django ORM method should you use on the queryset to explicitly limit the columns fetched from the database?",
+            options: [
+                "`filter()`",
+                "**`only()`** (or `values()`)",
+                "`all()`",
+                "`annotate()`"
+            ],
+            answerText: "**`only()`** (or `values()`)"
+        },
+        {
+            scenario: "A Flask application needs to securely manage user sessions without storing the session data on the server side (stateless).",
+            question: "How does Flask, by default, handle and secure session data for stateless communication?",
+            options: [
+                "Stores session data in a database.",
+                "**Serializes and cryptographically signs the session data** (stored in a client-side cookie).",
+                "Uses local storage in the browser.",
+                "Requires a separate Redis instance for all sessions."
+            ],
+            answerText: "**Serializes and cryptographically signs the session data** (stored in a client-side cookie)."
+        }
+    ];
+
+    // --- Data Preparation: Shuffle Questions and Options ---
+    const shuffledInitialQuestions = shuffleArray(initialQuestions);
+    const questions = shuffledInitialQuestions.map(q => {
+        const indexedOptions = q.options.map((text) => ({ text: text, isCorrect: text === q.answerText }));
+        const shuffledOptions = shuffleArray(indexedOptions);
+        const newAnswerIndex = shuffledOptions.findIndex(opt => opt.isCorrect);
+        const finalOptions = shuffledOptions.map(opt => opt.text);
+        return {
+            scenario: q.scenario,
+            question: q.question,
+            options: finalOptions,
+            answer: newAnswerIndex
+        };
+    });
+
+    let currentQuestionIndex = 0;
+    let userAnswers = new Array(questions.length).fill(null);
+    let timerInterval;
+    const TIME_LIMIT = 30;
+    const totalQuestions = questions.length;
+
+    const startScreen = document.getElementById('start-screen');
+    const quizInterface = document.getElementById('quiz-interface');
+    const quizContent = document.getElementById('quiz-content');
+    const resultScreen = document.getElementById('result-screen');
+    const nextButton = document.getElementById('next-button');
+    const progressFill = document.getElementById('progress-fill');
+    const timeLeftSpan = document.getElementById('time-left');
+
+    window.startQuiz = function() {
+        startScreen.style.display = 'none';
+        quizInterface.style.display = 'block';
+        renderQuestion(currentQuestionIndex);
+    }
+
+    function startTimer() {
+        clearInterval(timerInterval);
+        let timeRemaining = TIME_LIMIT;
+        timeLeftSpan.textContent = timeRemaining;
+
+        timerInterval = setInterval(() => {
+            timeRemaining--;
+            timeLeftSpan.textContent = timeRemaining;
+
+            if (timeRemaining <= 0) {
+                clearInterval(timerInterval);
+                if (currentQuestionIndex < totalQuestions - 1) {
+                    currentQuestionIndex++;
+                    renderQuestion(currentQuestionIndex);
+                } else {
+                    showResults();
+                }
+            }
+        }, 1000);
+    }
+
+    function renderQuestion(index) {
+        clearInterval(timerInterval);
+        document.querySelectorAll('.question-slide').forEach(q => q.classList.remove('active'));
+
+        let questionElement = document.getElementById(`q-${index}`);
+
+        if (!questionElement) {
+            const qData = questions[index];
+            questionElement = document.createElement('div');
+            questionElement.className = 'question-slide';
+            questionElement.id = `q-${index}`;
+
+            let optionsHtml = qData.options.map((option, optIndex) => `
+                <button class="option-button" data-question-index="${index}" data-option-index="${optIndex}">
+                    ${option}
+                </button>
+            `).join('');
+
+            questionElement.innerHTML = `
+                <h2>Question ${index + 1} of ${totalQuestions}</h2>
+                <div class="scenario-text">${qData.scenario}</div>
+                <p style="font-weight: bold;">${qData.question}</p>
+                <div class="options-group">${optionsHtml}</div>
+            `;
+            quizContent.appendChild(questionElement);
+
+            questionElement.querySelectorAll('.option-button').forEach(button => {
+                button.addEventListener('click', handleOptionClick);
+            });
+        }
+        
+        setTimeout(() => { questionElement.classList.add('active'); }, 10); 
+        
+        startTimer();
+
+        updateNavigation();
+        updateProgress();
+        highlightSelectedAnswer(index);
+    }
+
+    function handleOptionClick(event) {
+        const button = event.target.closest('.option-button');
+        const qIndex = parseInt(button.dataset.questionIndex);
+        const oIndex = parseInt(button.dataset.optionIndex);
+        userAnswers[qIndex] = oIndex;
+        const optionsGroup = button.closest('.options-group');
+        optionsGroup.querySelectorAll('.option-button').forEach(btn => btn.classList.remove('selected'));
+        button.classList.add('selected');
+        updateNavigation(); 
+    }
+
+    function highlightSelectedAnswer(index) {
+        const selectedOption = userAnswers[index];
+        const currentSlide = document.getElementById(`q-${index}`);
+        if (currentSlide) {
+            currentSlide.querySelectorAll('.option-button').forEach((btn, optIndex) => {
+                btn.classList.remove('selected');
+                if (optIndex === selectedOption) {
+                    btn.classList.add('selected');
+                }
+            });
+        }
+    }
+
+    function updateNavigation() {
+        const isAnswered = userAnswers[currentQuestionIndex] !== null; 
+
+        if (currentQuestionIndex < totalQuestions - 1) {
+            nextButton.textContent = 'Next →';
+            nextButton.disabled = !isAnswered; 
+            nextButton.onclick = () => { 
+                if (isAnswered) {
+                    clearInterval(timerInterval);
+                    currentQuestionIndex++; 
+                    renderQuestion(currentQuestionIndex);
+                } 
+            };
+        } else {
+            nextButton.textContent = 'Finish & Score';
+            nextButton.disabled = !isAnswered;
+            nextButton.onclick = () => { 
+                if (isAnswered) {
+                    clearInterval(timerInterval);
+                    showResults(); 
+                }
+            };
+        }
+    }
+
+    function updateProgress() {
+        const answeredCount = userAnswers.filter(a => a !== null).length;
+        const progress = (answeredCount / totalQuestions) * 100;
+        progressFill.style.width = `${progress}%`;
+    }
+
+    function calculateScore() {
+        let score = 0;
+        questions.forEach((q, index) => {
+            if (userAnswers[index] === q.answer) {
+                score++;
+            }
+        });
+        return score;
+    }
+
+    function showResults() {
+        clearInterval(timerInterval);
+        const finalScore = calculateScore();
+        const percentage = Math.round((finalScore / totalQuestions) * 100);
+        
+        let feedback = '';
+        if (percentage >= 95) {
+            feedback = "Expert! Exceptional mastery of Python, asynchronous programming, web frameworks (Django/Flask), and API security.";
+        } else if (percentage >= 85) {
+            feedback = "Very Strong! Solid mastery of Python backend development, concurrency, and ORM performance tuning.";
+        } else if (percentage >= 75) {
+            feedback = "Good Foundation! You understand core Python concepts and web framework fundamentals. Focus on advanced concurrency and performance optimization.";
+        } else {
+            feedback = "Further study is recommended in Python's concurrency models (asyncio/multiprocessing) and framework best practices.";
+        }
+
+        quizContent.style.display = 'none';
+        document.getElementById('navigation').style.display = 'none';
+        document.getElementById('timer-display').style.display = 'none';
+
+        progressFill.style.width = '100%';
+        resultScreen.style.display = 'block';
+        document.getElementById('final-score').textContent = `${finalScore} / ${totalQuestions}`;
+        document.getElementById('performance-feedback').textContent = feedback;
+    }
+</script>
+
+</body>
+</html>
